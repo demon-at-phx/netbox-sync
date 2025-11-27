@@ -43,6 +43,7 @@ class SyncEngine:
 
         # Track processed serials to find retirements
         processed_serials = set()
+        changes_made = 0
 
         for device in source_devices:
             serial = device['serial']
@@ -63,6 +64,7 @@ class SyncEngine:
                 manufacturer = self.netbox.create_manufacturer(manufacturer_name, slug)
                 if manufacturer:
                     netbox_manufacturers[manufacturer_name.lower()] = manufacturer
+                    changes_made += 1
                 else:
                     self.logger.error(f"Failed to create manufacturer {manufacturer_name}. Skipping device {serial}.")
                     continue
@@ -84,6 +86,7 @@ class SyncEngine:
                 item_type = self.netbox.create_item_type(payload)
                 if item_type:
                     netbox_item_types[model_name.lower()] = item_type
+                    changes_made += 1
                 else:
                     self.logger.error(f"Failed to create item type {model_name}. Skipping device {serial}.")
                     continue
@@ -105,6 +108,7 @@ class SyncEngine:
                 # CREATE
                 self.logger.info(f"Creating Asset: {serial} ({device['name']})")
                 self.netbox.create_asset(asset_payload)
+                changes_made += 1
             else:
                 # UPDATE
                 # Check for changes (simplified check)
@@ -117,6 +121,7 @@ class SyncEngine:
                 if needs_update:
                     self.logger.info(f"Updating Asset: {serial}")
                     self.netbox.update_asset(existing_asset['id'], asset_payload)
+                    changes_made += 1
 
         # RETIRE MISSING ASSETS
         # Only retire assets that are in Netbox but not in Source
@@ -128,3 +133,7 @@ class SyncEngine:
                 if asset.get('status') != 'retired':
                     self.logger.info(f"Retiring Asset: {serial}")
                     self.netbox.update_asset(asset['id'], {'status': 'retired'})
+                    changes_made += 1
+
+        if changes_made == 0:
+            self.logger.info("No changes detected. System is up to date.")
