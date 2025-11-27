@@ -1,0 +1,13 @@
+[General]
+sync_interval = 3600
+log_externally = false
+log_server = IP:PORT
+
+[Netbox]
+url = https://srvnetbox.company.be
+token = CHANGE_ME_NETBOX_TOKEN
+
+[PDQ]
+url = https://app.pdq.com
+token = CHANGE_ME_PDQ_TOKEN
+enabled = true
